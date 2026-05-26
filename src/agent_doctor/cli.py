@@ -271,31 +271,42 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub = parser.add_subparsers(dest="command", required=True)
 
+    def add_format_option(p: argparse.ArgumentParser) -> None:
+        # Accept `--format` after the subcommand too, matching the README and
+        # common CLI muscle memory. SUPPRESS preserves the top-level default
+        # when the subcommand-local option is omitted.
+        p.add_argument("--format", "-f", choices=["text", "json"], default=argparse.SUPPRESS, help="Output format")
+
     # scan
     p_scan = sub.add_parser("scan", help="Scan entire project root")
+    add_format_option(p_scan)
     p_scan.add_argument("--root", required=True, help="Project root directory")
     p_scan.add_argument("--memory-limits", help="Comma-separated memory,user char limits (e.g. 10000,5000)")
     p_scan.set_defaults(func=cmd_scan)
 
     # credentials
     p_cred = sub.add_parser("credentials", help="Check env file for placeholder/missing keys")
+    add_format_option(p_cred)
     p_cred.add_argument("--env-file", required=True, help="Path to .env file")
     p_cred.set_defaults(func=cmd_credentials)
 
     # routing
     p_route = sub.add_parser("routing", help="Check routing config against policy")
+    add_format_option(p_route)
     p_route.add_argument("--config", required=True, help="Routing config file (YAML/JSON)")
     p_route.add_argument("--policy", required=True, help="Routing policy file (YAML/JSON)")
     p_route.set_defaults(func=cmd_routing)
 
     # cron
     p_cron = sub.add_parser("cron", help="Check cron/jobs configuration")
+    add_format_option(p_cron)
     p_cron.add_argument("--jobs", required=True, help="Path to jobs JSON file")
     p_cron.add_argument("--output-dir", help="Directory containing job output artifacts")
     p_cron.set_defaults(func=cmd_cron)
 
     # memory
     p_mem = sub.add_parser("memory", help="Check memory file char budgets")
+    add_format_option(p_mem)
     p_mem.add_argument("--memory-file", required=True, help="Path to memory file")
     p_mem.add_argument("--user-file", help="Path to user file")
     p_mem.add_argument("--limits", help="Comma-separated memory,user char limits")
@@ -303,6 +314,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # skills
     p_skills = sub.add_parser("skills", help="Validate SKILL.md files")
+    add_format_option(p_skills)
     p_skills.add_argument("--skills-dir", required=True, help="Directory containing SKILL.md files")
     p_skills.set_defaults(func=cmd_skills)
 
