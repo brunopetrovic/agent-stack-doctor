@@ -75,24 +75,29 @@ jobs:
       - name: Scan for secret patterns
         run: |
           echo "=== Scanning for potential secret patterns ==="
-          # Patterns that should NEVER appear in committed code (literal secrets)
-          PATTERNS=(
-            "AKIA[0-9A-Z]{16}"          # AWS access key
-            "sk-[0-9a-zA-Z]{20,}"        # OpenAI sk-
-            "ghp_[0-9a-zA-Z]{36}"        # GitHub personal access token
-            "gho_[0-9a-zA-Z]{36}"        # GitHub OAuth
-            "glpat-[0-9a-zA-Z]{20,}"    # GitLab PAT
-            "sq0csp-[0-9A-Za-z]{43}"     # Stripe key
-            "\["'\"][0-9a-z]{32,32}["'\"]"  # Generic 32-char secret in quotes
-          )
+
+          # Write patterns to a temp file (avoids bash quoting issues with regex in YAML)
+          cat > /tmp/secret_patterns.txt << 'PATTERNS'
+          AKIA[0-9A-Z]{16}
+          sk-[0-9a-zA-Z]{20,}
+          ghp_[0-9a-zA-Z]{36}
+          gho_[0-9a-zA-Z]{36}
+          glpat-[0-9a-zA-Z]{20,}
+          sq0csp-[0-9A-Za-z]{43}
+          [\"'][0-9a-z]{32,32}[\"']
+          PATTERNS
 
           FOUND=0
-          for pat in "${PATTERNS[@]}"; do
-            if grep -rE "$pat" --include="*.py" --include="*.yaml" --include="*.yml" --include="*.json" --include="*.toml" --include="*.md" . 2>/dev/null | grep -v ".git" | grep -v "node_modules" | grep -v "dist/" | grep -v "build/"; then
+          while IFS= read -r pat; do
+            # Skip empty lines and comment lines
+            [[ -z "$pat" || "$pat" =~ ^# ]] && continue
+            if grep -rE "$pat" --include="*.py" --include="*.yaml" --include="*.yml" --include="*.json" --include="*.toml" --include="*.md" . 2>/dev/null | \
+               grep -v ".git" | grep -v "node_modules" | grep -v "dist/" | grep -v "build/" | \
+               grep -v "PATTERNS" | grep -v "secret_patterns.txt" | grep -v "secret-scan" > /dev/null 2>&1; then
               echo "ALERT: Pattern matched: $pat"
               FOUND=1
             fi
-          done
+          done < /tmp/secret_patterns.txt
 
           if [ $FOUND -eq 1 ]; then
             echo "FAILED: Secret-like patterns found in codebase"
