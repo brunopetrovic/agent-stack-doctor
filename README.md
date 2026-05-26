@@ -1,5 +1,7 @@
 # Agent Stack Doctor
 
+[![CI](https://github.com/brunopetrovic/agent-stack-doctor/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/brunopetrovic/agent-stack-doctor/actions/workflows/ci.yml)
+
 **AI agents fail in boring ways:** expired keys, wrong fallback routes, zombie crons, memory bloat, and broken prompt-skill files. Agent Stack Doctor catches that locally before your agent silently rots.
 
 ```
