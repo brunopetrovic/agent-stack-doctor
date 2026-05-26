@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main, minimax-publication-hardening]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile-check all Python files
+        run: |
+          python -m py_compile src/agent_doctor/*.py
+          python -m py_compile tests/*.py
+        shell: bash
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: pytest -q
+
+  build:
+    name: Build sdist/wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build
+        run: python -m build
+
+      - name: Verify artifact exists
+        run: |
+          ls -la dist/
+          test -f dist/agent_doctor-*.whl || (echo " Wheel not found" && exit 1)
+          test -f dist/agent_doctor-*.tar.gz || (echo " Tarball not found" && exit 1)
+
+  secret-scan:
+    name: Secret Pattern Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for secret patterns
+        run: |
+          echo "=== Scanning for potential secret patterns ==="
+          # Patterns that should NEVER appear in committed code (literal secrets)
+          PATTERNS=(
+            "AKIA[0-9A-Z]{16}"          # AWS access key
+            "sk-[0-9a-zA-Z]{20,}"        # OpenAI sk-
+            "ghp_[0-9a-zA-Z]{36}"        # GitHub personal access token
+            "gho_[0-9a-zA-Z]{36}"        # GitHub OAuth
+            "glpat-[0-9a-zA-Z]{20,}"    # GitLab PAT
+            "sq0csp-[0-9A-Za-z]{43}"     # Stripe key
+            "\["'\"][0-9a-z]{32,32}["'\"]"  # Generic 32-char secret in quotes
+          )
+
+          FOUND=0
+          for pat in "${PATTERNS[@]}"; do
+            if grep -rE "$pat" --include="*.py" --include="*.yaml" --include="*.yml" --include="*.json" --include="*.toml" --include="*.md" . 2>/dev/null | grep -v ".git" | grep -v "node_modules" | grep -v "dist/" | grep -v "build/"; then
+              echo "ALERT: Pattern matched: $pat"
+              FOUND=1
+            fi
+          done
+
+          if [ $FOUND -eq 1 ]; then
+            echo "FAILED: Secret-like patterns found in codebase"
+            exit 1
+          else
+            echo "PASSED: No obvious secret patterns detected"
+          fi
+        shell: bash
