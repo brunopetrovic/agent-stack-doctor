@@ -42,10 +42,11 @@ _Placeholder_re = re.compile(
     r"|<[^>]+>"                      # <placeholder>, <INSERT_KEY>, etc.
     r"|\{\{.*\}\}"                   # {{ ... }}
     r"|\$\{.*\}"                     # ${ ... }
-    r"|NULL|null|None|NONE"
-    r"|CHANGE[_-]ME"
-    r"|TODO"
-    r"|\s+"
+    r"|['\"]?(?:NULL|null|None|NONE|CHANGE[_-]ME.*|TODO.*|REPLACE[_-]ME.*|YOUR[_-]KEY[_-]HERE|YOUR[_-]API[_-]KEY|INSERT[_-]KEY[_-]HERE|INSERT[_-]API[_-]KEY|YOUR_.*_HERE|your_.*_here)['\"]?"
+    r"|['\"]{2}"                    # empty quotes "" or ''
+    r"|['\"]?[xX]{4,}['\"]?"         # xxxx or XXXXXX
+    r"|['\"]?123456+['\"]?"          # 123456
+    r"|\s*"                          # empty or whitespace
     r")$",
     re.IGNORECASE,
 )

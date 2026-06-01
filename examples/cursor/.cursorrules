@@ -1,0 +1,11 @@
+# Cursor Agent Project Rules
+
+You are editing a project with an AI Agent Stack.
+Please follow these guidelines:
+
+1. **No Credentials/Placeholders**: Never output fake credentials or placeholders like `TODO` or `<INSERT_KEY>` in `.env` files or active configurations.
+2. **Scan Before Completing**: After making changes to environment variables, skills, routing, or agent memory, run the diagnostic wedge check:
+   ```bash
+   agent-doctor scan --root .
+   ```
+3. **Budget Consciousness**: Ensure all prompt-skill Markdown files have valid YAML frontmatter specifying `name` and `description`.

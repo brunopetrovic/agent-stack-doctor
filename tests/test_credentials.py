@@ -44,6 +44,31 @@ class TestCredentials:
         assert statuses.get("OPENAI_API_KEY") == "set"
         assert statuses.get("MY_KEY") == "set"
 
+    def test_new_placeholder_patterns(self, tmp_path):
+        env = tmp_path / ".env"
+        content = (
+            "EMPTY_QUOTES=\"\"\n"
+            "SINGLE_QUOTES=''\n"
+            "YOUR_KEY=your_key_here\n"
+            "YOUR_API_KEY=YOUR_API_KEY_HERE\n"
+            "REPLACE_KEY=replace-me\n"
+            "DUMMY_KEY=xxxxxx\n"
+            "DUMMY_KEY_QUOTED=\"XXXX\"\n"
+            "NUM_KEY=123456\n"
+            "BLANK_KEY=\n"
+            "TODO_KEY=TODO_ADD_THIS\n"
+            "CHANGE_KEY=CHANGE_ME_NOW\n"
+        )
+        env.write_text(content)
+        report = check_file(env)
+        placeholders = {k.key for k in report.placeholders}
+        expected = {
+            "EMPTY_QUOTES", "SINGLE_QUOTES", "YOUR_KEY", "YOUR_API_KEY",
+            "REPLACE_KEY", "DUMMY_KEY", "DUMMY_KEY_QUOTED", "NUM_KEY", "BLANK_KEY",
+            "TODO_KEY", "CHANGE_KEY"
+        }
+        assert expected.issubset(placeholders), f"Expected subset of {expected}, got {placeholders}"
+
     def test_missing_required_keys(self, tmp_path):
         env = tmp_path / ".env"
         env.write_text("OPENAI_API_KEY=sk-abc\n")

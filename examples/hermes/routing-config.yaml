@@ -1,0 +1,15 @@
+# Hermes Model Routing Configuration
+
+routes:
+  - id: core-reasoning
+    type: standard
+    provider: openai/gpt-4o
+  - id: agent-summarization
+    type: auxiliary
+    provider: openai/gpt-4o-mini  # Cheap model for aux
+  - id: code-generation
+    type: standard
+    provider: anthropic/claude-3-5-sonnet
+  - id: log-parser
+    type: auxiliary
+    provider: openai/gpt-4o  # PREMIUM model leaked into auxiliary route!

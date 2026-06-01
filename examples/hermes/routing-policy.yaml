@@ -1,0 +1,25 @@
+# Hermes Routing Policy Rules
+
+routes:
+  - id: core-reasoning
+    type: standard
+    allowed_providers:
+      - openai
+      - anthropic
+      - google
+  - id: agent-summarization
+    type: auxiliary
+    blocked_providers:
+      - openai
+      - anthropic
+      - google
+  - id: code-generation
+    type: standard
+    allowed_providers:
+      - anthropic
+  - id: log-parser
+    type: auxiliary
+    blocked_providers:
+      - openai
+      - anthropic
+      - google
